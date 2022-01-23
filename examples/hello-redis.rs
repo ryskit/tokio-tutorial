@@ -5,11 +5,16 @@ pub async fn main() -> Result<()> {
     // mini-redis アドレスのコネクションを開く
     let mut client = client::connect("127.0.0.1:6379").await?;
 
-    client.set("hello", "world".into()).await?;
+    let t1 = tokio::spawn(async {
+        let res = client.get("hello").await;
+    });
 
-    let result = client.get("hello").await?;
+    let t2 = tokio::spawn(async {
+        client.set("foo", "bar".into()).await;
+    });
 
-    println!("got value from the server; result={:?}", result);
+    t1.await.unwrap();
+    t2.await.unwrap();
 
     Ok(())
 }
